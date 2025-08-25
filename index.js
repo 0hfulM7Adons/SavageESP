@@ -116,19 +116,24 @@ register("chat", (message) => {
     }
 }).setCriteria("${message}")
 
+register("command", () => {
+    ChatLib.chat(Dungeon.inDungeon)
+}).setName("asdf")
+
 const tickChecker = register("tick", () => {
+    
     if (!(config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.hideSheep || config.sheepEsp || config.customEsp) || !Dungeon.inDungeon) return
 
     // Star Mobs + Shadow Assassin
     if (config.starEsp) {
         markedArmorStands.clear()
         starredMobs.clear()
-        const armorStands = World.getAllEntitiesOfType(EntityArmorStand)
+        let armorStands = World.getAllEntitiesOfType(EntityArmorStand)
     
         for (let i = 0; i < armorStands.length; ++i) {
             let armorStand = armorStands[i]
             if (armorStand.getName().includes("✯")) {
-                const nearby = World.getWorld().func_72839_b(armorStand.entity, armorStand.entity.func_174813_aQ().func_72317_d(0.0, -1.0, 0.0))
+                let nearby = World.getWorld().func_72839_b(armorStand.entity, armorStand.entity.func_174813_aQ().func_72317_d(0.0, -1.0, 0.0))
                 for (let mob of nearby) {
                     if (isValidEntity(mob)) {
                         let match = armorStand.getName().match(starMobRegex)
@@ -194,14 +199,17 @@ const tickChecker = register("tick", () => {
     }
     
     // Withers
-    if (config.witherEsp) {
+    if (config.witherEsp || config.goldorTracer) {
         let withers = []
         withers = World.getAllEntitiesOfType(EntityWither)
 
         witherBoss = null
 
         for (let w of withers) {
-            if (w.entity.func_82212_n() != 800 && !w.isInvisible()) witherBoss = w
+            if (w.entity.func_82212_n() != 800 && !w.isInvisible()) {
+                if (witherPhase == 4 && w.getRenderY() > 90) continue
+                witherBoss = w
+            }
         }
         
         if (witherBoss && witherPhase > 0) {
@@ -214,7 +222,7 @@ const tickChecker = register("tick", () => {
     // Bats
     if (config.batEsp) {
         let batsFound = []
-        const bats = World.getAllEntitiesOfType(EntityBat)
+        let bats = World.getAllEntitiesOfType(EntityBat)
         let hp = [100.0, 200.0, 400.0, 800.0]
         for (let i = 0; i < bats.length; ++i) {
             let bat = bats[i]
@@ -235,7 +243,7 @@ const tickChecker = register("tick", () => {
     // Mimic
     if (config.mimicEsp) {
         let mimicFound = null
-        const entities = World.getAllEntitiesOfType(EntityArmorStand)
+        let entities = World.getAllEntitiesOfType(EntityArmorStand)
         for (let i = 0; i < entities.length; ++i) {
             let entity = entities[i]
             if (entity.getName().includes("Mimic")) {
@@ -255,7 +263,7 @@ const tickChecker = register("tick", () => {
     // Mimic Chest
     if (config.mimicChestEsp) {
         let mimicChestsFound = []
-        const trappedChests = getTrappedChests()
+        let trappedChests = getTrappedChests()
         for (let i = 0; i < trappedChests.length; ++i) {
             mimicChestsFound.push(trappedChests[i])
         }
@@ -273,7 +281,7 @@ const tickChecker = register("tick", () => {
     if (config.keyTracer || config.keyEsp) {
         let keysFound = []
         let bloodKeyFound = null
-        const entities = World.getAllEntitiesOfType(EntityArmorStand)
+        let entities = World.getAllEntitiesOfType(EntityArmorStand)
         for (let i = 0; i < entities.length; ++i) {
             let entity = entities[i]
             if (entity.getName().includes("Wither Key")) {
@@ -297,7 +305,7 @@ const tickChecker = register("tick", () => {
     // Sheep
     if (config.hideSheep || config.highlightSheep) {
         let sheepsFound = []
-        const sheepss = World.getAllEntitiesOfType(EntitySheep)
+        let sheepss = World.getAllEntitiesOfType(EntitySheep)
         for (let i = 0; i < sheepss.length; ++i) {
             sheepsFound.push(sheepss[i])
         }
@@ -313,18 +321,18 @@ const tickChecker = register("tick", () => {
         }
     }
 
-    // Custom
 
-    if (starEsp || saEsp || witherEsp || batEsp || mimicEsp || mimicChestEsp || keyEsp) {
+
+    if (starEsp || saEsp || witherEsp || batEsp || mimicEsp || mimicChestEsp || keyEsp || sheepEsp) {
         espRenderer.register()
     } else {
         espRenderer.unregister()
     }
 
-}).unregister()
+})
 
 function inGarden() {
-    let index = TabList?.getNames()?.findIndex(line => line?.toLowerCase()?.includes("garden"))
+    let index = TabList?.getNames()?.findIndex(line => line?.removeFormatting()?.toLowerCase()?.includes("area: garden"))
     if (index > -1) return true;
     return false;
 }
@@ -336,7 +344,7 @@ const gardenTickChecker = register("tick", () => {
     // Pests
     if (config.pestEsp) {
         let pestsFound = []
-        const armorStands = World.getAllEntitiesOfType(EntityArmorStand)
+        let armorStands = World.getAllEntitiesOfType(EntityArmorStand)
         for (let i = 0; i < armorStands.length; ++i) {
             let armorStand = armorStands[i]
             let helmet = armorStand.entity.func_82169_q(3)
@@ -362,7 +370,7 @@ const gardenTickChecker = register("tick", () => {
         espRenderer.unregister()
     }
 
-}).unregister()
+})
 
 if (config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.customEsp) {
     tickChecker.register()
