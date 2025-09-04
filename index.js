@@ -768,6 +768,8 @@ register("worldUnload", () => {
     mimicChests = []
     witherKeys = []
     bloodKey = null
+    sheeps = []
+    pests = []
 })
 
 register("command", () => {

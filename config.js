@@ -115,6 +115,7 @@ class config {
         increment: 1
     })
     witherOutlineWidth = 2;
+    
     @DecimalSliderProperty({
         name: "Wither ESP Width",
         description: "Width of wither esp",
