@@ -1,17 +1,7 @@
 import Dungeon from "../BloomCore/dungeons/Dungeon"
-import StarMob from "./utils/utils"
-import { getTrappedChests, EntityArmorStand, EntityOtherPlayerMP, EntityWither, EntityBat, EntitySheep, S0EPacketSpawnObject, S13PacketDestroyEntities } from "./utils/utils"
+import StarMob from "./utils/starMobUtils"
+import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightArmorStand, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
 import config from "./config"
-
-const RenderUtils = Java.type("me.odinmain.utils.render.RenderUtils");
-const ColorUtils = Java.type("me.odinmain.utils.render.Color");
-const AxisAlignedBB = Java.type("net.minecraft.util.AxisAlignedBB");
-const javaColor = Java.type("java.awt.Color")
-const Vec3 = Java.type("net.minecraft.util.Vec3")
-
-const starMobRegex = /§6✯ (?:§.)*(.+)§r.+§c❤$|^(Shadow Assassin)$/
-
-let witherPhase = 0
 
 let starredMobs = new Set()
 let markedArmorStands = new Set()
@@ -34,91 +24,6 @@ let mimicChestEsp = false
 let keyEsp = false
 let sheepEsp = false
 let pestEsp = false
-
-function isValidEntity(entity) {
-    if (!entity) return false
-    else if (entity instanceof EntityArmorStand) return false
-    else if (entity instanceof EntityWither) return false
-    else if (entity == Player.getPlayer()) return false
-    else return true
-}
-
-function shouldHighlight(entity) {
-    if (config.mode == 1) return true
-    let eyePos = Player.getPlayer().func_174824_e(0);
-    let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + j, entity.getRenderZ() - 0.5 + k / 2))
-            }
-        }
-    }
-
-    for (let v of vecs) {
-        if (World.getWorld().func_147447_a(eyePos, v, false, false, false) == null) return true
-    }
-    return false
-}
-
-function shouldHighlightArmorStand(entity) {
-    if (config.mode == 1) return true
-    let eyePos = Player.getPlayer().func_174824_e(0);
-    let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + j, entity.getRenderZ() - 0.5 + k / 2))
-            }
-        }
-    }
-
-    for (let v of vecs) {
-        if (World.getWorld().func_147447_a(eyePos, v, false, false, false) == null) return true
-    }
-    return false
-}
-
-function shouldHighlightKey(entity) {
-    if (config.mode == 1) return true
-    let eyePos = Player.getPlayer().func_174824_e(0);
-    let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + 1.15 + j / 2, entity.getRenderZ() - 0.5 + k / 2))
-            }
-        }
-    }
-
-    for (let v of vecs) {
-        if (World.getWorld().func_147447_a(eyePos, v, false, false, false) == null) return true
-    }
-    return false
-}
-
-register("chat", (message) => {
-    if (!config.witherEsp) return
-    if (message == "[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!") {
-        witherPhase = 1
-    }
-    if (message == "[BOSS] Storm: Pathetic Maxor, just like expected.") {
-        witherPhase = 2
-    }
-    if (message == "The Core entrance is opening!") {
-        witherPhase = 3
-    }
-    if (message == "[BOSS] Necron: You went further than any human before, congratulations.") {
-        witherPhase = 4
-    }
-    if (message == "[BOSS] Necron: All this, for nothing...") {
-        witherPhase = 0
-    }
-}).setCriteria("${message}")
-
-register("command", () => {
-    ChatLib.chat(Dungeon.inDungeon)
-}).setName("asdf")
 
 const tickChecker = register("tick", () => {
     
@@ -207,12 +112,12 @@ const tickChecker = register("tick", () => {
 
         for (let w of withers) {
             if (w.entity.func_82212_n() != 800 && !w.isInvisible()) {
-                if (witherPhase == 4 && w.getRenderY() > 90) continue
+                if (getPhase() == 4 && w.getRenderY() > 90) continue
                 witherBoss = w
             }
         }
         
-        if (witherBoss && witherPhase > 0) {
+        if (witherBoss && getPhase() > 0) {
             witherEsp = true
         } else {
             witherEsp = false
@@ -331,12 +236,6 @@ const tickChecker = register("tick", () => {
 
 })
 
-function inGarden() {
-    let index = TabList?.getNames()?.findIndex(line => line?.removeFormatting()?.toLowerCase()?.includes("area: garden"))
-    if (index > -1) return true;
-    return false;
-}
-
 const gardenTickChecker = register("tick", () => {
 
     if (!config.pestEsp || !inGarden()) return;
@@ -380,6 +279,14 @@ if (config.pestEsp) {
     gardenTickChecker.register()
 }
 
+function makeColor(configColor) {
+    let r = configColor.getRed()
+    let g = configColor.getGreen()
+    let b = configColor.getBlue()
+    let a = configColor.getAlpha()
+    return new ColorUtils(javaColor.RGBtoHSB(r, g, b, null), 255 * a)
+}
+
 const espRenderer = register("renderWorld", () => {
 
     let phase = false
@@ -387,37 +294,62 @@ const espRenderer = register("renderWorld", () => {
     // STAR MOBS
 
     if (starEsp || saEsp) {
-        const starOutlineColor = config.starOutline
-        const starFillColor = config.starFill
-        const starOutlineWidth = config.starOutlineWidth
+        let starOutlineColor = makeColor(config.starOutline)
+        let starFillColor = makeColor(config.starFill)
+        let minibossOutlineColor = makeColor(config.minibossOutline)
+        let minibossFillColor = makeColor(config.minibossFill)
+        let saOutlineColor = makeColor(config.saOutline)
+        let saFillColor = makeColor(config.saFill)
+        let felsOutlineColor = makeColor(config.felsOutline)
+        let felsFillColor = makeColor(config.felsFill)
+        let tankyOutlineColor = makeColor(config.tankyOutline)
+        let tankyFillColor = makeColor(config.tankyFill)
 
-        let r1 = starOutlineColor.getRed()
-        let g1 = starOutlineColor.getGreen()
-        let b1 = starOutlineColor.getBlue()
-        let a1 = starOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = starFillColor.getRed()
-        let g2 = starFillColor.getGreen()
-        let b2 = starFillColor.getBlue()
-        let a2 = starFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
-        
         if (starEsp) {
             for (let mob of starredMobs) {
+                let outlineColor = starOutlineColor
+                let fillColor = starFillColor
+                let outlineWidth = config.starOutlineWidth
+                if (config.detailed) {
+                    switch (mob.mobType) {
+                        case 1: 
+                            outlineColor = minibossOutlineColor
+                            fillColor = minibossFillColor
+                            outlineWidth = config.minibossOutlineWidth
+                            break
+                        case 2: 
+                            outlineColor = felsOutlineColor
+                            fillColor = felsFillColor
+                            outlineWidth = config.felsOutlineWidth
+                            break
+                        case 3: 
+                            outlineColor = tankyOutlineColor
+                            fillColor = tankyFillColor
+                            outlineWidth = config.tankyOutlineWidth
+                            break
+                    }
+                }
                 let [x, y, z] = [mob.entity.getRenderX(), mob.entity.getRenderY() - mob.height, mob.entity.getRenderZ()]
                 let w = 0.6
                 let h = mob.height
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
                 if (shouldHighlightArmorStand(mob.entity)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
-                    RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, starOutlineWidth, phase, true)
+                    RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, outlineWidth, phase, true)
                 }
             }
         }
     
         if (saEsp) {
             for (let i = 0; i < shadowAssassins.length; ++i) {
+                let outlineColor = starOutlineColor
+                let fillColor = starFillColor
+                let outlineWidth = config.starOutlineWidth
+                if (config.detailed) {
+                    outlineColor = saOutlineColor
+                    fillColor = saFillColor
+                    outlineWidth = config.saOutlineWidth
+                }
                 let sa = shadowAssassins[i]
                 let [x, y, z] = [sa.getRenderX(), sa.getRenderY(), sa.getRenderZ()]
                 let w = 0.6
@@ -425,7 +357,7 @@ const espRenderer = register("renderWorld", () => {
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
                 if (shouldHighlight(sa)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
-                    RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, starOutlineWidth, phase, true)
+                    RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, outlineWidth, phase, true)
                 }
             }
         }
@@ -434,36 +366,19 @@ const espRenderer = register("renderWorld", () => {
     // WITHERS
 
     if (witherEsp) {
-        const witherOutlineColor = config.witherOutline
-        const witherFillColor = config.witherFill
         const witherOutlineWidth = config.witherOutlineWidth
         const witherWidth = config.witherEspWidth
-        const goldorTracerColor = config.goldorTracerColor
         const goldorTracerWidth = config.goldorTracerWidth
 
-        let r1 = witherOutlineColor.getRed()
-        let g1 = witherOutlineColor.getGreen()
-        let b1 = witherOutlineColor.getBlue()
-        let a1 = witherOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = witherFillColor.getRed()
-        let g2 = witherFillColor.getGreen()
-        let b2 = witherFillColor.getBlue()
-        let a2 = witherFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
-
-        let r3 = goldorTracerColor.getRed()
-        let g3 = goldorTracerColor.getGreen()
-        let b3 = goldorTracerColor.getBlue()
-        let a3 = goldorTracerColor.getAlpha()
-        let tracerColor = new ColorUtils(javaColor.RGBtoHSB(r3, g3, b3, null), 255 * a3)
+        let outlineColor = makeColor(config.witherOutline)
+        let fillColor = makeColor(config.witherFill)
+        let tracerColor = makeColor(config.goldorTracerColor)
 
         const playerY = Player.getRenderY() + (Player.isSneaking() ? 1.54 : 1.62)
         
         if (!witherBoss) return
         let [x, y, z] = [witherBoss.getRenderX(), witherBoss.getRenderY(), witherBoss.getRenderZ()]
-        if (witherPhase == 1) {
+        if (getPhase() == 1) {
             let w = witherWidth
             let h = 3.1
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
@@ -481,7 +396,7 @@ const espRenderer = register("renderWorld", () => {
             }
         }
     
-        if (config.goldorTracer && witherPhase == 3 && config.mode == 1) {
+        if (config.goldorTracer && getPhase() == 3 && config.mode == 1) {
             let vec1 = new Vec3(Player.getRenderX(), playerY, Player.getRenderZ())
             let vec2 = new Vec3(x, y, z)
             let points = new ArrayList()
@@ -494,21 +409,10 @@ const espRenderer = register("renderWorld", () => {
     // BATS
 
     if (batEsp) {
-        const batOutlineColor = config.batOutline
-        const batFillColor = config.batFill
         const batOutlineWidth = config.batOutlineWidth
 
-        let r1 = batOutlineColor.getRed()
-        let g1 = batOutlineColor.getGreen()
-        let b1 = batOutlineColor.getBlue()
-        let a1 = batOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = batFillColor.getRed()
-        let g2 = batFillColor.getGreen()
-        let b2 = batFillColor.getBlue()
-        let a2 = batFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
+        let outlineColor = makeColor(config.batOutline)
+        let fillColor = makeColor(config.batFill)
     
         for (let i = 0; i < secretBats.length; ++i) {
             let bat = secretBats[i]
@@ -526,21 +430,10 @@ const espRenderer = register("renderWorld", () => {
     // MIMICS
 
     if (mimicEsp || mimicChestEsp) {
-        const mimicOutlineColor = config.mimicOutline
-        const mimicFillColor = config.mimicFill
         const mimicOutlineWidth = config.mimicOutlineWidth
 
-        let r1 = mimicOutlineColor.getRed()
-        let g1 = mimicOutlineColor.getGreen()
-        let b1 = mimicOutlineColor.getBlue()
-        let a1 = mimicOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = mimicFillColor.getRed()
-        let g2 = mimicFillColor.getGreen()
-        let b2 = mimicFillColor.getBlue()
-        let a2 = mimicFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
+        let outlineColor = makeColor(config.mimicOutline)
+        let fillColor = makeColor(config.mimicFill)
 
         if (mimicEsp) {
             let [x, y, z] = [mimic.getRenderX(), mimic.getRenderY() - 1, mimic.getRenderZ()]
@@ -569,51 +462,16 @@ const espRenderer = register("renderWorld", () => {
     // KEYS
 
     if (keyEsp) {
-        const witherKeyOutlineColor = config.witherKeyOutline
-        const witherKeyFillColor = config.witherKeyFill
-        const bloodKeyOutlineColor = config.bloodKeyOutline
-        const bloodKeyFillColor = config.bloodKeyFill
         const keyOutlineWidth = config.keyOutlineWidth
         const keyTracerWidth = config.keyTracerWidth
-        const witherKeyTracerColor = config.witherKeyTracerColor
-        const bloodKeyTracerColor = config.bloodKeyFill
 
-        let r1 = witherKeyOutlineColor.getRed()
-        let g1 = witherKeyOutlineColor.getGreen()
-        let b1 = witherKeyOutlineColor.getBlue()
-        let a1 = witherKeyOutlineColor.getAlpha()
-        let witherOutlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
+        let witherOutlineColor = makeColor(config.witherKeyOutline)
+        let witherFillColor = makeColor(config.witherKeyFill)
+        let bloodOutlineColor = makeColor(config.bloodKeyOutline)
+        let bloodFillColor = makeColor(config.bloodKeyFill)
+        let witherTracerColor = makeColor(config.witherKeyTracerColor)
+        let bloodTracerColor = makeColor(config.bloodKeyTracerColor)
 
-        let r2 = witherKeyFillColor.getRed()
-        let g2 = witherKeyFillColor.getGreen()
-        let b2 = witherKeyFillColor.getBlue()
-        let a2 = witherKeyFillColor.getAlpha()
-        let witherFillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
-
-        let r3 = bloodKeyOutlineColor.getRed()
-        let g3 = bloodKeyOutlineColor.getGreen()
-        let b3 = bloodKeyOutlineColor.getBlue()
-        let a3 = bloodKeyOutlineColor.getAlpha()
-        let bloodOutlineColor = new ColorUtils(javaColor.RGBtoHSB(r3, g3, b3, null), 255 * a3)
-
-        let r4 = bloodKeyFillColor.getRed()
-        let g4 = bloodKeyFillColor.getGreen()
-        let b4 = bloodKeyFillColor.getBlue()
-        let a4 = bloodKeyFillColor.getAlpha()
-        let bloodFillColor = new ColorUtils(javaColor.RGBtoHSB(r4, g4, b4, null), 255 * a4)
-
-        let r5 = witherKeyTracerColor.getRed()
-        let g5 = witherKeyTracerColor.getGreen()
-        let b5 = witherKeyTracerColor.getBlue()
-        let a5 = witherKeyTracerColor.getAlpha()
-        let witherTracerColor = new ColorUtils(javaColor.RGBtoHSB(r5, g5, b5, null), 255 * a5)
-
-        let r6 = bloodKeyTracerColor.getRed()
-        let g6 = bloodKeyTracerColor.getGreen()
-        let b6 = bloodKeyTracerColor.getBlue()
-        let a6 = bloodKeyTracerColor.getAlpha()
-        let bloodTracerColor = new ColorUtils(javaColor.RGBtoHSB(r6, g6, b6, null), 255 * a6)
-    
         const playerY = Player.getRenderY() + (Player.isSneaking() ? 1.54 : 1.62)
     
         for (let i = 0; i < witherKeys.length; ++i) {
@@ -667,21 +525,10 @@ const espRenderer = register("renderWorld", () => {
     // SHEEP
 
     if (sheepEsp) {
-        const sheepOutlineColor = config.sheepOutline
-        const sheepFillColor = config.sheepFill
         const sheepOutlineWidth = config.sheepOutlineWidth
 
-        let r1 = sheepOutlineColor.getRed()
-        let g1 = sheepOutlineColor.getGreen()
-        let b1 = sheepOutlineColor.getBlue()
-        let a1 = sheepOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = sheepFillColor.getRed()
-        let g2 = sheepFillColor.getGreen()
-        let b2 = sheepFillColor.getBlue()
-        let a2 = sheepFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
+        let outlineColor = makeColor(config.sheepOutline)
+        let fillColor = makeColor(config.sheepFill)
     
         for (let i = 0; i < sheeps.length; ++i) {
             let sheep = sheeps[i]
@@ -692,7 +539,7 @@ const espRenderer = register("renderWorld", () => {
             if (shouldHighlight(sheep)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, sheepOutlineWidth, phase, true)
-                ChatLib.chat("bro what is that white animal on your screen")
+                if (Player.getUUID() != "e9b3b5a8-5d7c-457c-9e86-c268ae325f02") ChatLib.chat("bro what is that white animal on your screen")
             }
         }
     }
@@ -700,29 +547,12 @@ const espRenderer = register("renderWorld", () => {
     // PESTS
 
     if (pestEsp) {
-        const pestOutlineColor = config.pestOutline
-        const pestFillColor = config.pestFill
         const pestOutlineWidth = config.pestOutlineWidth
-        const pestTracerColor = config.pestTracerColor
         const pestTracerWidth = config.pestTracerWidth
 
-        let r1 = pestOutlineColor.getRed()
-        let g1 = pestOutlineColor.getGreen()
-        let b1 = pestOutlineColor.getBlue()
-        let a1 = pestOutlineColor.getAlpha()
-        let outlineColor = new ColorUtils(javaColor.RGBtoHSB(r1, g1, b1, null), 255 * a1)
-
-        let r2 = pestFillColor.getRed()
-        let g2 = pestFillColor.getGreen()
-        let b2 = pestFillColor.getBlue()
-        let a2 = pestFillColor.getAlpha()
-        let fillColor = new ColorUtils(javaColor.RGBtoHSB(r2, g2, b2, null), 255 * a2)
-
-        let r3 = pestTracerColor.getRed()
-        let g3 = pestTracerColor.getGreen()
-        let b3 = pestTracerColor.getBlue()
-        let a3 = pestTracerColor.getAlpha()
-        let tracerColor = new ColorUtils(javaColor.RGBtoHSB(r3, g3, b3, null), 255 * a3)
+        let outlineColor = makeColor(config.sheepOutline)
+        let fillColor = makeColor(config.sheepFill)
+        let tracerColor = makeColor(config.pestTracerColor)
 
         const playerY = Player.getRenderY() + (Player.isSneaking() ? 1.54 : 1.62)
     
@@ -760,7 +590,6 @@ const hideSheep = register("renderEntity", (entity, pos, pt, event) => {
 register("worldUnload", () => {
     starredMobs.clear()
     markedArmorStands.clear()
-    witherPhase = 0
     shadowAssassins = []
     witherBoss = null
     secretBats = []

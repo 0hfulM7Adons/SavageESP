@@ -24,17 +24,15 @@ import {
     },
     getPropertyComparator: () => (a, b) => {
         const names = ["Star Mob ESP", "Wither ESP", "Bat ESP", "Mimic ESP", "Mimic Chest ESP", "Key ESP", "Pest ESP", "Custom ESP", 
-            "Outline Color", "Fill Color", "Wither Key Outline Color", "Wither Key Fill Color", "Blood Key Outline Color", "Blood Key Fill Color", "Outline Line Width", "Wither ESP Width",
-            "Goldor Tracer", "Key Tracer", "Line Width", "Line Color", "Wither Key Tracer Color", "Blood Key Tracer Color"];
+            "Outline Color", "Fill Color", "Outline Line Width", "Miniboss Outline Color", "Miniboss Fill Color", "Miniboss Outline Line Width", "Shadow Assassin Outline Color", "Shadow Assassin Fill Color", 
+            "Shadow Assassin Outline Line Width", "Fels Outline Color", "Fels Fill Color", "Fels Outline Line Width", "Tanky Mob Outline Color", "Tanky Mob Fill Color", "Tanky Mob Outline Line Width", 
+            "Wither Key Outline Color", "Wither Key Fill Color", "Blood Key Outline Color", "Blood Key Fill Color", "Outline Line Width", "Wither ESP Width", "Goldor Tracer", "Key Tracer", 
+            "Line Width", "Line Color", "Wither Key Tracer Color", "Blood Key Tracer Color"];
         return names.indexOf(a.attributesExt.name) - names.indexOf(b.attributesExt.name);
     }
 })
 
 class config {
-
-    constructor() {
-        this.initialize(this)
-    }
 
     @SelectorProperty({
         name: "Mode",
@@ -47,6 +45,13 @@ class config {
         ]
     })
     mode = 0;
+    @SwitchProperty({
+        name: "Detailed Star Mob ESP",
+        description: "Different esp colors for minibosses, shadow assassins, fels, tanky mobs, and regular starred mobs",
+        category: "ESP",
+        subcategory: "Mode"
+    })
+    detailed = false;
 
 
 
@@ -57,6 +62,7 @@ class config {
         subcategory: "Star Mob"
     })
     starEsp = false;
+
     @ColorProperty({
         name: "Outline Color",
         description: "Box outline color for star mob esp",
@@ -81,6 +87,107 @@ class config {
         increment: 1
     })
     starOutlineWidth = 2;
+
+    @ColorProperty({
+        name: "Miniboss Outline Color",
+        description: "Box outline color for minibosses",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    minibossOutline = new Color(1, 1, 1, 1);
+    @ColorProperty({
+        name: "Miniboss Fill Color",
+        description: "Box fill color for minibosses",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    minibossFill = new Color(1, 1, 1, 1);
+    @NumberProperty({
+        name: "Miniboss Outline Line Width",
+        description: "Width of miniboss outline",
+        category: "ESP",
+        subcategory: "Star Mob",
+        min: 1,
+        max: 10,
+        increment: 1
+    })
+    minibossOutlineWidth = 2;
+
+    @ColorProperty({
+        name: "Shadow Assassin Outline Color",
+        description: "Box outline color for shadow assassins",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    saOutline = new Color(1, 1, 1, 1);
+    @ColorProperty({
+        name: "Shadow Assassin Fill Color",
+        description: "Box fill color for shadow assassins",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    saFill = new Color(1, 1, 1, 1);
+    @NumberProperty({
+        name: "Shadow Assassin Outline Line Width",
+        description: "Width of shadow assassin outline",
+        category: "ESP",
+        subcategory: "Star Mob",
+        min: 1,
+        max: 10,
+        increment: 1
+    })
+    saOutlineWidth = 2;
+
+    @ColorProperty({
+        name: "Fels Outline Color",
+        description: "Box outline color for fels",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    felsOutline = new Color(1, 1, 1, 1);
+    @ColorProperty({
+        name: "Fels Fill Color",
+        description: "Box fill color for fels",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    felsFill = new Color(1, 1, 1, 1);
+    @NumberProperty({
+        name: "Fels Outline Line Width",
+        description: "Width of fels outline",
+        category: "ESP",
+        subcategory: "Star Mob",
+        min: 1,
+        max: 10,
+        increment: 1
+    })
+    felsOutlineWidth = 2;
+
+    @ColorProperty({
+        name: "Tanky Mob Outline Color",
+        description: "Box outline color for tanky mobs",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    tankyOutline = new Color(1, 1, 1, 1);
+    @ColorProperty({
+        name: "Tanky Mob Fill Color",
+        description: "Box fill color for tanky mobs",
+        category: "ESP",
+        subcategory: "Star Mob"
+    })
+    tankyFill = new Color(1, 1, 1, 1);
+    @NumberProperty({
+        name: "Tanky Mob Outline Line Width",
+        description: "Width of tanky mob outline",
+        category: "ESP",
+        subcategory: "Star Mob",
+        min: 1,
+        max: 10,
+        increment: 1
+    })
+    tankyOutlineWidth = 2;
+    
 
 
 
@@ -449,6 +556,28 @@ class config {
         subcategory: "Pests"
     })
     pestTracerColor = new Color(1, 0, 0, 1);
+
+    constructor() {
+        
+        this.initialize(this)
+
+        this.addDependency("Miniboss Outline Color", "Detailed Star Mob ESP")
+        this.addDependency("Miniboss Fill Color", "Detailed Star Mob ESP")
+        this.addDependency("Miniboss Outline Line Width", "Detailed Star Mob ESP")
+
+        this.addDependency("Shadow Assassin Outline Color", "Detailed Star Mob ESP")
+        this.addDependency("Shadow Assassin Fill Color", "Detailed Star Mob ESP")
+        this.addDependency("Shadow Assassin Outline Line Width", "Detailed Star Mob ESP")
+
+        this.addDependency("Fels Outline Color", "Detailed Star Mob ESP")
+        this.addDependency("Fels Fill Color", "Detailed Star Mob ESP")
+        this.addDependency("Fels Outline Line Width", "Detailed Star Mob ESP")
+
+        this.addDependency("Tanky Mob Outline Color", "Detailed Star Mob ESP")
+        this.addDependency("Tanky Mob Fill Color", "Detailed Star Mob ESP")
+        this.addDependency("Tanky Mob Outline Line Width", "Detailed Star Mob ESP")
+
+    }
 
 }
 
