@@ -83,7 +83,7 @@ export function shouldHighlightKey(entity) {
     return false
 }
 
-let witherphase = 0;
+let witherPhase = 0;
 
 register("chat", (message) => {
     if (message == "[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!") {
@@ -103,12 +103,8 @@ register("chat", (message) => {
     }
 }).setCriteria("${message}")
 
-register("worldLoad", () => {
-    witherPhase = 0;
-})
-
 export function getPhase() {
-    return witherphase;
+    return witherPhase;
 }
 
 export function inGarden() {
