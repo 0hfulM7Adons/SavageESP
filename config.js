@@ -36,11 +36,12 @@ class config {
 
     @SelectorProperty({
         name: "Mode",
-        description: "Savage mode",
+        description: "Savage mode\nHighlight (Raytrace) has worse performance the more mobs in your render distance, but looks much better than regular Highlight",
         category: "ESP",
         subcategory: "Mode",
         options: [
             "Highlight",
+            "Highlight (Raytrace)",
             "ESP"
         ]
     })
@@ -432,7 +433,7 @@ class config {
     pestOutlineWidth = 2;
     
 
-
+    /*
     @SwitchProperty({
         name: "Custom ESP",
         description: "Highlights specific custom mobs [/esp add <mob name>]",
@@ -464,6 +465,7 @@ class config {
         increment: 1
     })
     customOutlineWidth = 2;
+    */
 
     
     /*

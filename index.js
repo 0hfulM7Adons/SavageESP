@@ -1,6 +1,6 @@
 import Dungeon from "../BloomCore/dungeons/Dungeon"
 import StarMob from "./utils/starMobUtils"
-import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightArmorStand, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
+import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
 import config from "./config"
 
 let starredMobs = new Set()
@@ -289,7 +289,7 @@ function makeColor(configColor) {
 
 const espRenderer = register("renderWorld", () => {
 
-    let phase = false
+    let phase = config.mode == 0
 
     // STAR MOBS
 
@@ -333,7 +333,7 @@ const espRenderer = register("renderWorld", () => {
                 let w = 0.6
                 let h = mob.height
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-                if (shouldHighlightArmorStand(mob.entity)) {
+                if (shouldHighlight(mob.entity, 1, h)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                     RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, outlineWidth, phase, true)
                 }
@@ -382,7 +382,7 @@ const espRenderer = register("renderWorld", () => {
             let w = witherWidth
             let h = 3.1
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(witherBoss)) {
+            if (shouldHighlight(witherBoss, 2, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, witherOutlineWidth, phase, true)
             }
@@ -390,13 +390,13 @@ const espRenderer = register("renderWorld", () => {
             let w = witherWidth
             let h = 3.7
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(witherBoss)) {
+            if (shouldHighlight(witherBoss, 2, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, witherOutlineWidth, phase, true)
             }
         }
     
-        if (config.goldorTracer && getPhase() == 3 && config.mode == 1) {
+        if (config.goldorTracer && getPhase() == 3 && config.mode == 2) {
             let vec1 = new Vec3(Player.getRenderX(), playerY, Player.getRenderZ())
             let vec2 = new Vec3(x, y, z)
             let points = new ArrayList()
@@ -420,7 +420,7 @@ const espRenderer = register("renderWorld", () => {
             let w = 0.6
             let h = 0.9
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(bat)) {
+            if (shouldHighlight(bat, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, batOutlineWidth, phase, true)
             }
@@ -440,7 +440,7 @@ const espRenderer = register("renderWorld", () => {
             let w = 0.6
             let h = 1.3
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(mimic)) {
+            if (shouldHighlight(mimic, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, mimicOutlineWidth, phase, true)
             }
@@ -453,8 +453,8 @@ const espRenderer = register("renderWorld", () => {
                 let w = 0.9
                 let h = 0.9
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-                RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, config.mode == 0)
-                RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, mimicOutlineWidth, config.mode == 0, true)
+                RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, config.mode < 2)
+                RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, mimicOutlineWidth, config.mode < 2, true)
             }
         }
     }
@@ -488,7 +488,7 @@ const espRenderer = register("renderWorld", () => {
                 }
             }
     
-            if (config.keyTracer && config.mode == 1) {
+            if (config.keyTracer && config.mode == 2) {
                 let vec1 = new Vec3(Player.getRenderX(), playerY, Player.getRenderZ())
                 let vec2 = new Vec3(x, y, z)
                 let points = new ArrayList()
@@ -511,7 +511,7 @@ const espRenderer = register("renderWorld", () => {
                 }
             }
             
-            if (config.keyTracer && config.mode == 1) {
+            if (config.keyTracer && config.mode == 2) {
                 let vec1 = new Vec3(Player.getRenderX(), playerY, Player.getRenderZ())
                 let vec2 = new Vec3(x, y, z)
                 let points = new ArrayList()
@@ -536,7 +536,7 @@ const espRenderer = register("renderWorld", () => {
             let w = 1.5
             let h = 1.5
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(sheep)) {
+            if (shouldHighlight(sheep, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, sheepOutlineWidth, phase, true)
                 if (Player.getUUID() != "e9b3b5a8-5d7c-457c-9e86-c268ae325f02") ChatLib.chat("bro what is that white animal on your screen")
@@ -562,12 +562,12 @@ const espRenderer = register("renderWorld", () => {
             let w = 0.8
             let h = 0.8
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(pest)) {
+            if (shouldHighlight(pest, 1, 1)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, pestOutlineWidth, phase, true)
             }
 
-            if (config.pestTracer && config.mode == 1) {
+            if (config.pestTracer && config.mode == 2) {
                 let vec1 = new Vec3(Player.getRenderX(), playerY, Player.getRenderZ())
                 let vec2 = new Vec3(x, y, z)
                 let points = new ArrayList()

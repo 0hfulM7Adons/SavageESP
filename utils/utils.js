@@ -29,32 +29,14 @@ export function isValidEntity(entity) {
     else return true
 }
 
-export function shouldHighlight(entity) {
-    if (config.mode == 1) return true
+export function shouldHighlight(entity, width = 1, height = 2) {
+    if (config.mode != 1) return true
     let eyePos = Player.getPlayer().func_174824_e(0);
     let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + j, entity.getRenderZ() - 0.5 + k / 2))
-            }
-        }
-    }
-
-    for (let v of vecs) {
-        if (World.getWorld().func_147447_a(eyePos, v, false, false, false) == null) return true
-    }
-    return false
-}
-
-export function shouldHighlightArmorStand(entity) {
-    if (config.mode == 1) return true
-    let eyePos = Player.getPlayer().func_174824_e(0);
-    let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + j, entity.getRenderZ() - 0.5 + k / 2))
+    for (let i = 0; i <= width; i += width) {
+        for (let j = 0; j <= height; j += height) {
+            for (let k = 0; k <= width; k += width) {
+                vecs.push(new Vec3(entity.getRenderX() - width / 2 + i, entity.getRenderY() + j, entity.getRenderZ() - width / 2 + k))
             }
         }
     }
@@ -69,10 +51,10 @@ export function shouldHighlightKey(entity) {
     if (config.mode == 1) return true
     let eyePos = Player.getPlayer().func_174824_e(0);
     let vecs = []
-    for (let i = 0; i < 3; ++i) {
-        for (let j = 0; j < 3; ++j) {
-            for (let k = 0; k < 3; ++k) {
-                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i / 2, entity.getRenderY() + 1.15 + j / 2, entity.getRenderZ() - 0.5 + k / 2))
+    for (let i = 0; i < 2; ++i) {
+        for (let j = 0; j < 2; ++j) {
+            for (let k = 0; k < 2; ++k) {
+                vecs.push(new Vec3(entity.getRenderX() - 0.5 + i, entity.getRenderY() + 1.15 + j, entity.getRenderZ() - 0.5 + k))
             }
         }
     }
