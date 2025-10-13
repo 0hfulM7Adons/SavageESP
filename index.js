@@ -1,4 +1,3 @@
-import Dungeon from "../BloomCore/dungeons/Dungeon"
 import StarMob from "./utils/starMobUtils"
 import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
 import config from "./config"
@@ -27,14 +26,15 @@ let pestEsp = false
 
 const tickChecker = register("tick", () => {
     
-    if (!(config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.hideSheep || config.sheepEsp || config.customEsp) || !Dungeon.inDungeon) return
+    if (!(config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.hideSheep || config.sheepEsp || config.customEsp)) return
 
+    let armorStands = World.getAllEntitiesOfType(EntityArmorStand)
+    let otherPlayers = World.getAllEntitiesOfType(EntityOtherPlayerMP)
     // Star Mobs + Shadow Assassin
     if (config.starEsp) {
         markedArmorStands.clear()
         starredMobs.clear()
-        let armorStands = World.getAllEntitiesOfType(EntityArmorStand)
-    
+        
         for (let i = 0; i < armorStands.length; ++i) {
             let armorStand = armorStands[i]
             if (armorStand.getName().includes("✯")) {
@@ -75,9 +75,8 @@ const tickChecker = register("tick", () => {
         }
 
         let saFound = []
-        let entities = World.getAllEntitiesOfType(EntityOtherPlayerMP)
-        for (let i = 0; i < entities.length; ++i) {
-            let entity = entities[i]
+        for (let i = 0; i < otherPlayers.length; ++i) {
+            let entity = otherPlayers[i]
             if (!entity.entity.func_82169_q(0)) continue
             if (!entity.entity.func_70694_bm()) continue
             let boots = new Item(entity.entity.func_82169_q(0))
@@ -105,9 +104,8 @@ const tickChecker = register("tick", () => {
     
     // Withers
     if (config.witherEsp || config.goldorTracer) {
-        let withers = []
-        withers = World.getAllEntitiesOfType(EntityWither)
-
+        let withers = World.getAllEntitiesOfType(EntityWither)
+        
         witherBoss = null
 
         for (let w of withers) {
@@ -126,8 +124,8 @@ const tickChecker = register("tick", () => {
     
     // Bats
     if (config.batEsp) {
-        let batsFound = []
         let bats = World.getAllEntitiesOfType(EntityBat)
+        let batsFound = []
         let hp = [100.0, 200.0, 400.0, 800.0]
         for (let i = 0; i < bats.length; ++i) {
             let bat = bats[i]
@@ -148,9 +146,8 @@ const tickChecker = register("tick", () => {
     // Mimic
     if (config.mimicEsp) {
         let mimicFound = null
-        let entities = World.getAllEntitiesOfType(EntityArmorStand)
-        for (let i = 0; i < entities.length; ++i) {
-            let entity = entities[i]
+        for (let i = 0; i < armorStands.length; ++i) {
+            let entity = armorStands[i]
             if (entity.getName().includes("Mimic")) {
                 mimicFound = entity
             }
@@ -234,7 +231,7 @@ const tickChecker = register("tick", () => {
         espRenderer.unregister()
     }
 
-})
+}).unregister();
 
 const gardenTickChecker = register("tick", () => {
 
@@ -269,15 +266,19 @@ const gardenTickChecker = register("tick", () => {
         espRenderer.unregister()
     }
 
-})
+}).unregister();
 
-if (config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.customEsp) {
-    tickChecker.register()
-}
+register("chat", () => {
+    if (config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.customEsp) {
+        tickChecker.register();
+    }
+}).setCriteria(/\w+ is now ready!/)
 
-if (config.pestEsp) {
-    gardenTickChecker.register()
-}
+register("chat", () => {
+    if (config.pestEsp) {
+        gardenTickChecker.register();
+    }
+}).setCriteria(/.+! \d ൠ Pest have spawned in Plot - .+!/)
 
 function makeColor(configColor) {
     let r = configColor.getRed()
@@ -333,7 +334,7 @@ const espRenderer = register("renderWorld", () => {
                 let w = 0.6
                 let h = mob.height
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-                if (shouldHighlight(mob.entity, 1, h)) {
+                if (shouldHighlight(mob.entity, w, h)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                     RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, outlineWidth, phase, true)
                 }
@@ -355,7 +356,7 @@ const espRenderer = register("renderWorld", () => {
                 let w = 0.6
                 let h = 1.95
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-                if (shouldHighlight(sa)) {
+                if (shouldHighlight(sa, w, h)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                     RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, outlineWidth, phase, true)
                 }
@@ -382,7 +383,7 @@ const espRenderer = register("renderWorld", () => {
             let w = witherWidth
             let h = 3.1
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(witherBoss, 2, h)) {
+            if (shouldHighlight(witherBoss, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, witherOutlineWidth, phase, true)
             }
@@ -390,7 +391,7 @@ const espRenderer = register("renderWorld", () => {
             let w = witherWidth
             let h = 3.7
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(witherBoss, 2, h)) {
+            if (shouldHighlight(witherBoss, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, witherOutlineWidth, phase, true)
             }
@@ -536,7 +537,7 @@ const espRenderer = register("renderWorld", () => {
             let w = 1.5
             let h = 1.5
             let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
-            if (shouldHighlight(sheep, h)) {
+            if (shouldHighlight(sheep, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, sheepOutlineWidth, phase, true)
                 if (Player.getUUID() != "e9b3b5a8-5d7c-457c-9e86-c268ae325f02") ChatLib.chat("bro what is that white animal on your screen")
@@ -588,17 +589,20 @@ const hideSheep = register("renderEntity", (entity, pos, pt, event) => {
 }).unregister()
 
 register("worldUnload", () => {
-    starredMobs.clear()
-    markedArmorStands.clear()
-    shadowAssassins = []
-    witherBoss = null
-    secretBats = []
-    mimic = null
-    mimicChests = []
-    witherKeys = []
-    bloodKey = null
-    sheeps = []
-    pests = []
+    starredMobs.clear();
+    markedArmorStands.clear();
+    shadowAssassins = [];
+    witherBoss = null;
+    secretBats = [];
+    mimic = null;
+    mimicChests = [];
+    witherKeys = [];
+    bloodKey = null;
+    sheeps = [];
+    pests = [];
+    tickChecker.unregister();
+    gardenTickChecker.unregister();
+    espRenderer.unregister();
 })
 
 register("command", () => {
