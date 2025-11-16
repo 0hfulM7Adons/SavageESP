@@ -1,5 +1,5 @@
 import StarMob from "./utils/starMobUtils"
-import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
+import { EntityArmorStand, EntityOtherPlayerMP, EntityBat, EntityWither, EntityZombie, EntitySheep, TileEntityChest, getCurrentPhase, S0EPacketSpawnObject, S13PacketDestroyEntities, RenderUtils, ColorUtils, AxisAlignedBB, getPlayer, javaColor, Vec3, starMobRegex, getTrappedChests, isValidEntity, shouldHighlight, shouldHighlightKey, getPhase, inGarden } from "./utils/utils"
 import config from "./config"
 
 let starredMobs = new Set()
@@ -270,6 +270,7 @@ const gardenTickChecker = register("tick", () => {
 
 register("chat", () => {
     if (config.starEsp || config.witherEsp || config.batEsp || config.mimicEsp || config.mimicChestEsp || config.customEsp) {
+        if (!getPlayer()) return;
         tickChecker.register();
     }
 }).setCriteria(/\w+ is now ready!/)
@@ -333,6 +334,7 @@ const espRenderer = register("renderWorld", () => {
                 let [x, y, z] = [mob.entity.getRenderX(), mob.entity.getRenderY() - mob.height, mob.entity.getRenderZ()]
                 let w = 0.6
                 let h = mob.height
+                let l = getPlayer().field_72450_a;
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
                 if (shouldHighlight(mob.entity, w, h)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
@@ -355,6 +357,8 @@ const espRenderer = register("renderWorld", () => {
                 let [x, y, z] = [sa.getRenderX(), sa.getRenderY(), sa.getRenderZ()]
                 let w = 0.6
                 let h = 1.95
+                let l = getPlayer().field_72450_a;
+                w = getCurrentPhase() ? w : l;
                 let newBox = new AxisAlignedBB(x - w / 2, y, z - w / 2, x + w / 2, y + h, z + w / 2)
                 if (shouldHighlight(sa, w, h)) {
                     RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
@@ -540,7 +544,6 @@ const espRenderer = register("renderWorld", () => {
             if (shouldHighlight(sheep, w, h)) {
                 RenderUtils.INSTANCE.drawFilledAABB(newBox, fillColor, phase)
                 RenderUtils.INSTANCE.drawOutlinedAABB(newBox, outlineColor, sheepOutlineWidth, phase, true)
-                if (Player.getUUID() != "e9b3b5a8-5d7c-457c-9e86-c268ae325f02") ChatLib.chat("bro what is that white animal on your screen")
             }
         }
     }
