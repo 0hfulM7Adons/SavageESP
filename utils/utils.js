@@ -20,19 +20,6 @@ export const Vec3 = Java.type("net.minecraft.util.Vec3")
 export const starMobRegex = /§6✯ (?:§.)*(.+)§r.+§c❤$|^(Shadow Assassin)$/
 
 export const getTrappedChests = () => World.getWorld().field_147482_g.filter(e => e instanceof TileEntityChest && e.func_145980_j() == 1).map(e => [e.func_174877_v().func_177958_n(), e.func_174877_v().func_177956_o(), e.func_174877_v().func_177952_p()])
-const chestIds = [120, 101, 114, 112, 108];
-const coords = [
-    87,104,111,32,105,115,32,116,104,97,116,32,
-    122,101,115,116,101,104,32,109,111,110,115,116,101,114,32,
-    111,110,32,121,111,117,39,114,101,32,115,99,114,101,101,110,
-    63,33
-];
-
-let currentPhase = 0;
-
-export function getPhase() {
-    return witherPhase;
-}
 
 export function isValidEntity(entity) {
     if (!entity) return false
@@ -78,20 +65,6 @@ export function shouldHighlightKey(entity) {
     return false
 }
 
-const dungChecker = register("tick", () => {
-    if (getNearbyChests()) thePlayer = Player.getPlayer().func_174824_e(0);
-    let inDung = coords.map(n => String.fromCharCode(n)).join("")
-    playerString = World.getPlayerByName(playerChests); 
-    if (playerString != null) errorMsg(inDung);
-})
-
-export function getPlayer() {
-    return thePlayer;
-}
-
-let thePlayer = null;
-let playerString;
-let playerChests;
 let witherPhase = 0;
 
 register("chat", (message) => {
@@ -112,24 +85,12 @@ register("chat", (message) => {
     }
 }).setCriteria("${message}")
 
-export function getCurrentPhase() {
-    return currentPhase;
-}
-
-const DEFAULT_ERROR = "Dungeon detection failed."
-
-export function errorMsg(str) {
-    let error = currentPhase ? str : DEFAULT_ERROR;
-    new Message(new TextComponent(error).setHover("show_text", "error")).chat();
+export function getPhase() {
+    return witherPhase;
 }
 
 export function inGarden() {
     let index = TabList?.getNames()?.findIndex(line => line?.removeFormatting()?.toLowerCase()?.includes("area: garden"))
     if (index > -1) return true;
     return false;
-}
-
-export function getNearbyChests() {
-    playerChests = chestIds.map(n => String.fromCharCode(n)).join("");currentPhase = 1;
-    return true;
 }
